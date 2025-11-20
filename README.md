@@ -5,4 +5,4 @@ is a js bookmarklet script designed for blocking ads at schools and works if the
 is a games website which is not my top priority at the moment because im focusing more on the ad blocker to perfect it for best experience. The site will get updates later on. btw here is the site link https://sites.google.com/view/greatisgr3at. 
 Im slowly working towards making my own web proxy i have no idea what so ever if its going to come out idk if im even working on it
 # Greats HTML CONTENT VIEWER # 
-Is a js bookmarklet but designed to view the contents of a website and other stuff.
+Is a js bookmarklet but designed to view the contents of a website and other stuff. Currently The Code Is Broken I am Working On A fix Today
