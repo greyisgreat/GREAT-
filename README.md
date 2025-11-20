@@ -1,1 +1,1 @@
-This is a js bookmarklet script designed for blocking ads at schools and works if they block extenstions there. v1 is buggy at the moment so im currently working on v2.
+Greats Ad Blocker is a js bookmarklet script designed for blocking ads at schools and works if they block extenstions there. v1 is buggy at the moment so im currently working on v2. Greats Website is a games website which is not my top priority at the moment because im focusing more on the ad blocker to perfect it for best experience. The site will get updates later on.
