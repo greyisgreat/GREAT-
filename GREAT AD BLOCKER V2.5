@@ -1,0 +1,276 @@
+javascript:(()=>{
+
+if (window.GREAT_ADBLOCKER_LOADED) return;
+window.GREAT_ADBLOCKER_LOADED = 1;
+
+/* ------------------- STYLE ------------------- */
+const s = document.createElement("style");
+s.textContent = `
+#GREAT_UI{
+  position:fixed;top:20px;right:20px;z-index:999999999;
+  background:#1e1e1e;color:#fff;border:2px solid #444;
+  padding:14px;border-radius:12px;font-family:sans-serif;
+  box-shadow:0 0 12px rgba(0,0,0,.6);width:200px;user-select:none;
+}
+#GREAT_UI button{
+  width:100%;margin-top:10px;padding:8px;background:#333;
+  border:1px solid #666;border-radius:8px;color:#fff;
+  cursor:pointer;font-size:14px;font-weight:600
+}
+#GREAT_UI button:hover{background:#444}
+#GREAT_UI .title{text-align:center;font-size:16px;font-weight:700;margin-bottom:8px}
+#GREAT_CLOSE,#GREAT_MIN{
+  position:absolute;top:6px;font-size:18px;font-weight:bold;
+  cursor:pointer;color:#aaa;
+}
+#GREAT_CLOSE:hover,#GREAT_MIN:hover{color:#fff;}
+#GREAT_CLOSE{right:8px;} #GREAT_MIN{right:30px;}
+
+#GREAT_MINBAR{
+  position:fixed;top:20px;right:20px;background:#1e1e1e;color:#fff;
+  border:2px solid #444;padding:6px 10px;border-radius:10px;
+  font-family:sans-serif;cursor:pointer;z-index:999999999;display:none;
+}
+
+#GREAT_GRID{
+  position:fixed;top:0;left:0;width:100vw;height:100vh;
+  display:grid;grid-template-columns:repeat(12,1fr);
+  grid-template-rows:repeat(8,1fr);z-index:999999900;
+}
+#GREAT_GRID div{
+  border:1px solid rgba(255,255,255,.05);
+  background:rgba(0,0,0,0);
+}
+#GREAT_GRID div.sel{
+  background:rgba(255,0,0,.25);
+}
+`;
+document.body.appendChild(s);
+
+/* ------------------- UI ------------------- */
+const ui = document.createElement("div");
+ui.id = "GREAT_UI";
+ui.innerHTML = `
+  <div id="GREAT_MIN">_</div>
+  <div id="GREAT_CLOSE">×</div>
+  <span class="title">GREAT Ad Blocker</span>
+  <button id="g_sel">Drag Select</button>
+  <button id="g_all">Block All Ads</button>
+  <button id="g_git">Open GitHub</button>
+`;
+document.body.appendChild(ui);
+
+const minBar = document.createElement("div");
+minBar.id = "GREAT_MINBAR";
+minBar.textContent = "AdBlocker";
+document.body.appendChild(minBar);
+
+/* ------------------- WINDOW CONTROL ------------------- */
+document.getElementById("GREAT_CLOSE").onclick = () => {
+  ui.remove();
+  minBar.remove();
+  const g = document.getElementById("GREAT_GRID");
+  if (g) g.remove();
+};
+
+document.getElementById("GREAT_MIN").onclick = () => {
+  ui.style.display = "none";
+  minBar.style.display = "block";
+};
+
+minBar.onclick = () => {
+  minBar.style.display = "none";
+  ui.style.display = "block";
+};
+
+/* ------------------- DRAG MOVE ------------------- */
+let ox=0, oy=0;
+let dragUI = false, dragMB = false;
+
+ui.addEventListener("mousedown", e => {
+  if (e.target.tagName === "BUTTON" || e.target.id.includes("GREAT_")) return;
+  dragUI = true;
+  ox = e.clientX - ui.offsetLeft;
+  oy = e.clientY - ui.offsetTop;
+});
+
+minBar.addEventListener("mousedown", e => {
+  dragMB = true;
+  ox = e.clientX - minBar.offsetLeft;
+  oy = e.clientY - minBar.offsetTop;
+});
+
+document.addEventListener("mousemove", e => {
+  if (dragUI){
+    ui.style.left = (e.clientX - ox) + "px";
+    ui.style.top  = (e.clientY - oy) + "px";
+  }
+  if (dragMB){
+    minBar.style.left = (e.clientX - ox) + "px";
+    minBar.style.top  = (e.clientY - oy) + "px";
+  }
+});
+
+document.addEventListener("mouseup", () => {
+  dragUI = dragMB = false;
+});
+
+/* ------------------- REMOVE UTILITY ------------------- */
+const remove = el => el && el.remove();
+
+/* ------------------- BLOCK ALL ADS ------------------- */
+function blockAllAds() {
+
+  const cfg = {
+    cls: [
+      "adsbygoogle","mod_ad_container","brn-ads-box","gpt-ad",
+      "ad-box","top-ads-container","adthrive-ad"
+    ],
+
+    selector: [
+      '[aria-label="advertisement"]',
+      '[class*="-ad"],[class^="ad-"],[class$="-ad"]',
+      '[class^="adthrive"]',
+      'iframe[id^="google_ads_iframe_"]',
+      "#aipPrerollContainer",
+      "span[data-ez-ph-id] span[data-ez-ph-owner-id] span.ezoicwhat",
+      "div#_60cc9a6b-496d-4e44-90d8-0b2947bfd3ce"
+    ],
+
+    func: [
+      {
+        selector: '[class*="ad" i],[id*="ad" i]',
+        func(el){
+          const tokens = [
+            el.id,
+            ...el.classList,
+            el.tagName.toLowerCase()
+          ];
+          return tokens.some(t =>
+            /\bads?(vert(isement)?)?(\b|[-_])/.test(t)
+          );
+        }
+      },
+
+      {
+        selector: "div#preroll",
+        func(el){
+          return !!el.querySelector("div#aipBranding");
+        }
+      }
+    ],
+
+    ignore: {
+      selector: [
+        "body",
+        ".ad-layout",
+        "#game-holder.game-holder-with-ad",
+        ".no-interstitial-ads"
+      ],
+      func: [
+        el => {
+          return [...document.getElementsByTagName("article")]
+            .some(a => el.contains(a));
+        }
+      ]
+    }
+  };
+
+  const isIgnored = el => {
+    if (!el) return true;
+    if (cfg.ignore.selector.some(sel => el.matches(sel))) return true;
+    if (cfg.ignore.func.some(f => f(el))) return true;
+    return false;
+  };
+
+  const ops = {
+    elem(el){ if (!isIgnored(el)) remove(el); },
+
+    list(list){ [...list].forEach(ops.elem); },
+
+    cls(c){ ops.list(document.getElementsByClassName(c)); },
+
+    selector(sel){ ops.list(document.querySelectorAll(sel)); },
+
+    func(o){
+      const els = o.selector ?
+        document.querySelectorAll(o.selector) :
+        document.getElementsByTagName("*");
+
+      for (const el of els){
+        if (o.func(el)) ops.elem(el);
+      }
+    }
+  };
+
+  for (const k in cfg){
+    if (k === "ignore") continue;
+    for (const item of cfg[k]) ops[k](item);
+  }
+}
+
+/* ------------------- GRID SELECT ------------------- */
+function gridSelect(){
+
+  const grid = document.createElement("div");
+  grid.id = "GREAT_GRID";
+
+  let isDown = false;
+  let selected = new Set();
+
+  for (let i=0; i<96; i++){
+    const c = document.createElement("div");
+    c.dataset.i = i;
+
+    c.onmousedown = () => {
+      isDown = true;
+      c.classList.add("sel");
+      selected.add(c);
+    };
+
+    c.onmouseover = () => {
+      if (isDown){
+        c.classList.add("sel");
+        selected.add(c);
+      }
+    };
+
+    grid.appendChild(c);
+  }
+
+  const upHandler = () => {
+    if (!isDown) return;
+    isDown = false;
+
+    const rects = [...selected].map(c => c.getBoundingClientRect());
+
+    const minTop = Math.min(...rects.map(r => r.top));
+    const maxB   = Math.max(...rects.map(r => r.bottom));
+    const minL   = Math.min(...rects.map(r => r.left));
+    const maxR   = Math.max(...rects.map(r => r.right));
+
+    document.querySelectorAll("*").forEach(el => {
+      if (el === grid || el === ui || el === minBar) return;
+
+      const b = el.getBoundingClientRect();
+      if (b.top>=minTop && b.bottom<=maxB && b.left>=minL && b.right<=maxR){
+        remove(el);
+      }
+    });
+
+    grid.remove();
+    selected.clear();
+    document.removeEventListener("mouseup", upHandler);
+  };
+
+  document.addEventListener("mouseup", upHandler);
+  document.body.appendChild(grid);
+}
+
+/* ------------------- BUTTONS ------------------- */
+document.getElementById("g_sel").onclick = gridSelect;
+document.getElementById("g_all").onclick = blockAllAds;
+document.getElementById("g_git").onclick = () =>
+  window.open("https://github.com/greyisgreat/cGREAT-", "_blank");
+
+})();
